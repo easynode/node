@@ -435,6 +435,12 @@ class CipherBase : public BaseObject {
               int key_len,
               const char* iv,
               int iv_len);
+  void InitIvAdv(const char* cipher_type,
+              const char* key,
+              int key_len,
+              const char* iv,
+              int iv_len);
+
   bool Update(const char* data, int len, unsigned char** out, int* out_len);
   bool Final(unsigned char** out, int *out_len);
   bool SetAutoPadding(bool auto_padding);
@@ -447,6 +453,7 @@ class CipherBase : public BaseObject {
   static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void Init(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void InitIv(const v8::FunctionCallbackInfo<v8::Value>& args);
+  static void InitIvAdv(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void Update(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void Final(const v8::FunctionCallbackInfo<v8::Value>& args);
   static void SetAutoPadding(const v8::FunctionCallbackInfo<v8::Value>& args);

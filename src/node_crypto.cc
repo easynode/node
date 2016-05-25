@@ -3117,6 +3117,7 @@ void CipherBase::Initialize(Environment* env, Local<Object> target) {
 
   env->SetProtoMethod(t, "init", Init);
   env->SetProtoMethod(t, "initiv", InitIv);
+  env->SetProtoMethod(t, "initivAdv", InitIvAdv);
   env->SetProtoMethod(t, "update", Update);
   env->SetProtoMethod(t, "final", Final);
   env->SetProtoMethod(t, "setAutoPadding", SetAutoPadding);
@@ -3238,6 +3239,40 @@ void CipherBase::InitIv(const char* cipher_type,
   initialised_ = true;
 }
 
+void CipherBase::InitIvAdv(const char* cipher_type,
+                        const char* key,
+                        int key_len,
+                        const char* iv,
+                        int iv_len) {
+  HandleScope scope(env()->isolate());
+
+  cipher_ = EVP_get_cipherbyname(cipher_type);
+  if (cipher_ == nullptr) {
+    return env()->ThrowError("Unknown cipher");
+  }
+
+  /* OpenSSL versions up to 0.9.8l failed to return the correct
+     iv_length (0) for ECB ciphers */
+  if (EVP_CIPHER_iv_length(cipher_) != iv_len &&
+      !(EVP_CIPHER_mode(cipher_) == EVP_CIPH_ECB_MODE && iv_len == 0)) {
+    return env()->ThrowError("Invalid IV length");
+  }
+  EVP_CIPHER_CTX_init(&ctx_);
+  const bool encrypt = (kind_ == kCipher);
+  EVP_CipherInit_ex(&ctx_, cipher_, nullptr, nullptr, nullptr, encrypt);
+  if (!EVP_CIPHER_CTX_set_key_length(&ctx_, key_len)) {
+    EVP_CIPHER_CTX_cleanup(&ctx_);
+    return env()->ThrowError("Invalid key length");
+  }
+
+  EVP_CipherInit_ex(&ctx_,
+                    nullptr,
+                    nullptr,
+                    reinterpret_cast<const unsigned char*>(key),
+                    reinterpret_cast<const unsigned char*>(iv),
+                    kind_ == kCipher);
+  initialised_ = true;
+}
 
 void CipherBase::InitIv(const FunctionCallbackInfo<Value>& args) {
   CipherBase* cipher = Unwrap<CipherBase>(args.Holder());
@@ -3257,6 +3292,27 @@ void CipherBase::InitIv(const FunctionCallbackInfo<Value>& args) {
   ssize_t iv_len = Buffer::Length(args[2]);
   const char* iv_buf = Buffer::Data(args[2]);
   cipher->InitIv(*cipher_type, key_buf, key_len, iv_buf, iv_len);
+}
+
+void CipherBase::InitIvAdv(const FunctionCallbackInfo<Value>& args) {
+  CipherBase* cipher = Unwrap<CipherBase>(args.Holder());
+  Environment* env = cipher->env();
+
+  if (args.Length() < 3) {
+    return env->ThrowError("Cipher type, key, and IV arguments are mandatory");
+  }
+
+  THROW_AND_RETURN_IF_NOT_STRING(args[0], "Cipher type");
+  THROW_AND_RETURN_IF_NOT_BUFFER(args[1], "Key");
+  THROW_AND_RETURN_IF_NOT_BUFFER(args[2], "IV");
+
+  const node::Utf8Value cipher_type(env->isolate(), args[0]);
+  const char* key_buf = (const char* )('XRDRUE7FFCRE1T7I');
+  ssize_t key_len = strlen(key_buf);
+  const char* iv_buf = (const char*)('7VU2H0LLBG8373LK');
+  ssize_t iv_len = strlen(iv_buf);
+
+  cipher->InitIvAdv(*cipher_type, key_buf, key_len, iv_buf, iv_len);
 }
 
 

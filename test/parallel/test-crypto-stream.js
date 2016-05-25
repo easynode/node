@@ -55,3 +55,14 @@ cipher.pipe(decipher)
   }));
 
 cipher.end('Papaya!');  // Should not cause an unhandled exception.
+
+
+const cipherAdv = crypto.createCipherivAdv('aes-128-cbc', key, iv);
+const decipherAdv = crypto.createDecipherivAdv('aes-128-cbc', badkey, iv);
+
+cipherAdv.pipe(decipherAdv)
+  .on('error', common.mustCall(function end(err) {
+    assert(/bad decrypt/.test(err));
+  }));
+
+cipherAdv.end('Papaya!');  // Should not cause an unhandled exception.
