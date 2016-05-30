@@ -97,6 +97,29 @@ def npm_files(action):
   else:
     assert(0) # unhandled action type
 
+def uploader_files(action):
+  target_path = 'lib/node_modules/uploader/'
+
+  # don't install uploader if the target path is a symlink, it probably means
+  # that a dev version of uploader is installed there
+  if os.path.islink(abspath(install_path, target_path)): return
+
+  # uploader has a *lot* of files and it'd be a pain to maintain a fixed list here
+  # so we walk its source directory instead...
+  for dirname, subdirs, basenames in os.walk('deps/uploader', topdown=True):
+    subdirs[:] = filter('test'.__ne__, subdirs) # skip test suites
+    paths = [os.path.join(dirname, basename) for basename in basenames]
+    action(paths, target_path + dirname[9:] + '/')
+
+  # create/remove symlink
+  link_path = abspath(install_path, 'bin/uploader')
+  if action == uninstall:
+    action([link_path], 'bin/uploader')
+  elif action == install:
+    try_symlink('../lib/node_modules/uploader/uploader', link_path)
+  else:
+    assert(0) # unhandled action type
+
 def subdir_files(path, dest, action):
   ret = {}
   for dirpath, dirnames, filenames in os.walk(path):
@@ -125,6 +148,8 @@ def files(action):
     action(['doc/node.1'], 'share/man/man1/')
 
   if 'true' == variables.get('node_install_npm'): npm_files(action)
+
+  if 'true' == variables.get('node_install_uploader'): uploader_files(action)
 
   headers(action)
 

@@ -414,7 +414,7 @@ ifeq ($(DESTCPU),ia32)
 override DESTCPU=x86
 endif
 
-TARNAME=node-$(FULLVERSION)
+TARNAME=easynode-$(FULLVERSION)
 TARBALL=$(TARNAME).tar
 # Custom user-specified variation, use it directly
 ifdef VARIATION
@@ -555,7 +555,7 @@ endif
 
 $(BINARYTAR): release-only
 	rm -rf $(BINARYNAME)
-	rm -rf out/deps out/Release
+	#rm -rf out/deps out/Release
 	$(PYTHON) ./configure \
 		--prefix=/ \
 		--dest-cpu=$(DESTCPU) \
