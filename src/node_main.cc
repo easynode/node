@@ -50,6 +50,7 @@ int wmain(int argc, wchar_t *wargv[]) {
 // UNIX
 int main(int argc, char *argv[]) {
   setvbuf(stderr, NULL, _IOLBF, 1024);
+   fprintf(stdout, "This application is only supported on Windows 7, ");
   return node::Start(argc, argv);
 }
 #endif
