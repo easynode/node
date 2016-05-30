@@ -109,7 +109,7 @@ def uploader_files(action):
   for dirname, subdirs, basenames in os.walk('deps/uploader', topdown=True):
     subdirs[:] = filter('test'.__ne__, subdirs) # skip test suites
     paths = [os.path.join(dirname, basename) for basename in basenames]
-    action(paths, target_path + dirname[9:] + '/')
+    action(paths, target_path + dirname[14:] + '/')
 
   # create/remove symlink
   link_path = abspath(install_path, 'bin/uploader')
